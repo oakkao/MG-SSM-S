@@ -101,7 +101,10 @@ for i in range(len(data_list[start:stop])):
   for model_config in model_config_list:
         model, config = model_config
         start_time = time.time()
-        test_losses =  ModelTraining(model_config, train_loader, eval_loader, test_loader, num_epochs, learning_rate, num_runs)
+        if model == md.mg_smm_s.MgSmmSModel:
+          test_losses =  ModelTraining(model_config, train_loader, eval_loader, test_loader, num_epochs, learning_rate, num_runs, loss_function = nn.HuberLoss())
+        else:
+          test_losses =  ModelTraining(model_config, train_loader, eval_loader, test_loader, num_epochs, learning_rate, num_runs)
         end_time = time.time()
         elasped_time = end_time - start_time
 
