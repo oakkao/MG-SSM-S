@@ -9,20 +9,20 @@ class MgSmmCell(nn.Module):
         self.gate_size = gate_size
 
         # linear input gate
-        self.W_ic = nn.Linear(input_size, hidden_size)
-        self.W_hc = nn.Linear(hidden_size, hidden_size)
-        self.b_c = nn.Parameter(torch.zeros(hidden_size))
+        self.W_A = nn.Linear(hidden_size, hidden_size)
+        self.W_B = nn.Linear(input_size, hidden_size)
+        self.W_bh = nn.Parameter(torch.zeros(hidden_size))
 
         # multiplicative input gate
-        self.W_in = nn.Linear(gate_size, gate_size)
+        self.W_E = nn.Linear(gate_size, gate_size)
+        self.W_bg = nn.Parameter(torch.zeros(gate_size))
 
     def forward(self, x, hidden_state):
         h_prev, g_prev = hidden_state
 
         # Hidden state
-        h_t =  self.W_ic(x) + self.W_hc(h_prev) + self.b_c
-        intermediate_x = torch.repeat_interleave(x, self.gate_size, dim=1)
-        g_t =  self.W_in(g_prev) * intermediate_x
+        h_t =  self.W_A(h_prev) + self.W_B(x) +  self.W_bh
+        g_t =  self.W_E(g_prev) * torch.repeat_interleave(x, self.gate_size, dim=1)
 
         return h_t, g_t
 
@@ -45,10 +45,11 @@ class MgSmmModel(nn.Module):
         self.gate_size = gate_size
 
         self.num_layers = num_layers
-        self.lstm_cells = nn.ModuleList([MgSmmCell(input_size if i == 0 else hidden_size, hidden_size, gate_size) for i in range(num_layers)])
+        self.SSM_blocks = nn.ModuleList([MgSmmCell(input_size if i == 0 else hidden_size, hidden_size, gate_size) for i in range(num_layers)])
 
-        self.W_h = nn.Linear(hidden_size, output_size)
-        self.W_g = nn.Linear(gate_size, output_size)
+        self.W_C = nn.Linear(hidden_size, output_size)
+        self.W_D = nn.Linear(input_size, output_size)
+        self.W_J = nn.Linear(gate_size, output_size)
 
     def forward(self, x):
         """
@@ -68,15 +69,15 @@ class MgSmmModel(nn.Module):
         for t in range(seq_len):
             input_t = x[:, t, :]
             for i in range(self.num_layers):
-                h_prev, c_prev = hidden_state[i]
+                h_prev, g_prev = hidden_state[i]
 
                 # Mamba part (using the Custom_MambaCell)
-                h_t, c_t = self.lstm_cells[i](input_t, (h_prev, c_prev)) # Pass a single tensor
-                hidden_state[i] = (h_t, c_prev)
+                h_t, c_t = self.SSM_blocks[i](input_t, (h_prev, g_prev)) # Pass a single tensor
+                hidden_state[i] = (h_t, g_prev)
                 input_t = h_t # Use the output of the current layer as input for the next layer
 
         # Decode the hidden state of the last time step of the last layer
         h_prev, g_prev = hidden_state[-1]
 
-        out = self.W_h(h_prev) + self.W_g(g_prev)
+        out = self.W_C(h_prev) + self.W_D(x[:, seq_len - 1, :])+ self.W_J(g_prev)
         return out

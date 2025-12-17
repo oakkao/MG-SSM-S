@@ -2,6 +2,7 @@ import torch
 import time
 import numpy as np
 import pandas as pd
+import torch.nn as nn
 
 from torch.utils.data import TensorDataset, DataLoader
 from src.utils.data_loader import data_loader
@@ -55,10 +56,10 @@ model_config_list = [(md.baseline_models.OriginalLSTMModel,
                 "gate_size":32}),
                 (md.mg_smm_s.MgSmmSModel,
                 {"input_size":1,
-                "hidden_size":128,
+                "hidden_size":64,
                 "num_layers":1,
                 "output_size":1,
-                "gate_size":64}),
+                "gate_size":32}),
                 ]
 
 # parameter for training
@@ -101,10 +102,7 @@ for i in range(len(data_list[start:stop])):
   for model_config in model_config_list:
         model, config = model_config
         start_time = time.time()
-        if model == md.mg_smm_s.MgSmmSModel:
-          test_losses =  ModelTraining(model_config, train_loader, eval_loader, test_loader, num_epochs, learning_rate, num_runs, loss_function = nn.HuberLoss())
-        else:
-          test_losses =  ModelTraining(model_config, train_loader, eval_loader, test_loader, num_epochs, learning_rate, num_runs)
+        test_losses =  ModelTraining(model_config, train_loader, eval_loader, test_loader, num_epochs, learning_rate, num_runs)
         end_time = time.time()
         elasped_time = end_time - start_time
 

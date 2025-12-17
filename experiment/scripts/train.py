@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 # Model training part 
-def ModelTraining(model_config , train_data, eval_data, test_data, num_epochs, learning_rate, num_runs, loss_function = nn.L1Loss(), eval_function = nn.MSELoss()):  #train_raw_loader, test_raw_loader
+def ModelTraining(model_config , train_data, eval_data, test_data, num_epochs, learning_rate, num_runs, loss_function = nn.MSELoss(), eval_function = nn.MSELoss()):  #train_raw_loader, test_raw_loader
   # Initialize a list to store test losses
   test_losses = []
   model_function, config = model_config
