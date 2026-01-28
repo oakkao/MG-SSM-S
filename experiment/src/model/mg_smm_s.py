@@ -19,6 +19,7 @@ class MgSmmSCell(nn.Module):
         self.W_F = nn.Linear(input_size, gate_size)
         self.W_bg = nn.Parameter(torch.zeros(gate_size))
 
+
     def forward(self, x, hidden_state):
         h_prev, g_prev = hidden_state
 
@@ -74,8 +75,8 @@ class MgSmmSModel(nn.Module):
                 h_prev, g_prev = hidden_state[i]
 
                 # Mamba part (using the Custom_MambaCell)
-                h_t, c_t = self.SSM_blocks[i](input_t, (h_prev, g_prev)) # Pass a single tensor
-                hidden_state[i] = (h_t, g_prev)
+                h_t, g_t = self.SSM_blocks[i](input_t, (h_prev, g_prev)) # Pass a single tensor
+                hidden_state[i] = (h_t, g_t)
                 input_t = h_t # Use the output of the current layer as input for the next layer
 
         # Decode the hidden state of the last time step of the last layer
